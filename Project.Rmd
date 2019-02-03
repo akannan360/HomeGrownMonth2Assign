@@ -1,0 +1,88 @@
+---
+title: "HeartDisease"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Choose an appropriate model type
+The model type chosen is a logistic regression model as we are looking to predict a binary value
+
+```{r}
+library(caret)
+library(e1071)
+heartData <- read.csv("HDdata.csv")
+summary(heartData)
+```
+
+###In your data are there
+a. NAs?
+Yes there are 10 NAs in the age variable
+
+b. categorical values
+Yes cp and restecg are categorical values 
+
+c. binary values
+Yes sex, fbs, exang and num are binary values
+
+d. numeric values
+age, trestbps, chol, thalach and oldpeak are numeric values
+
+
+```{r}
+#pre-processing
+heartData$sex <- as.factor(heartData$sex)
+heartData$cp <- as.factor(heartData$cp)
+heartData$fbs <- as.factor(heartData$fbs)
+heartData$restecg <- as.factor(heartData$restecg)
+heartData$exang <- as.factor(heartData$exang)
+heartData$num <- as.factor(heartData$num)
+sum(is.na(heartData))
+#There are some na value
+heartData <- na.omit(heartData)
+
+```
+
+
+###Divide you data into a training and test set
+```{r}
+set.seed(150)
+partition <- createDataPartition(y = heartData$num, p = 0.7, list=F)
+trainingdata = heartData[partition, ]
+testdata = heartData[-partition, ]
+```
+
+
+###Fit a Linear or logistic regression model on the training set and predict using the test set
+```{r}
+heartlogreg = glm(num ~., data = trainingdata, family = binomial(link='logit'))
+```
+
+###Use your test set to assess the accuracy of the model
+Using a prediction threshold of 0.5
+
+```{r}
+heartlogregPred <- ifelse(predict(heartlogreg, testdata, type="response") > 0.5, 1, 0)
+```
+
+Construct a confusion matrix
+
+```{r}
+result_table <- table(predicted = heartlogregPred, actual = testdata$num)
+result_table
+heartlogregConfusionM = confusionMatrix(result_table)
+heartlogregConfusionM
+```
+Claculate the accuracy, PPV, NPV, Sensitivity and Specificty. 
+
+Accuracy is 0.7614
+
+Sensitivity is 0.7872
+
+Specificity is 0.7317
+
+PPV is 0.7708
+
+NPV is 0.7500
